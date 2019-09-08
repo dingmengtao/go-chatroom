@@ -74,3 +74,56 @@ func (userProcess *UserProcess) ServerProcessLogin(msg *message.Message) (err er
 
 	return
 }
+
+//ServerProcessRegister 处理注册的请求
+func (userProcess *UserProcess) ServerProcessRegister(msg *message.Message) (err error) {
+	//从msg中取出data反序列化成RegisterMsg
+	var registerMsg message.RegisterMsg
+	err = json.Unmarshal([]byte(msg.Data), &registerMsg)
+	if err != nil {
+		fmt.Println("server.process.userProcess.go.ServerProcessRegister.json.Unmarshal() err=", err)
+		return
+	}
+	//声明resMsg，作为返回信息结构
+	var resMsg message.Message
+	resMsg.Type = message.RegisterResMsgType
+	var registerResMsg message.RegisterResMsg
+	//将registerMsg的用户信息存入到redis数据库作为注册
+	err = model.MyUserDao.Register(&registerMsg.User)
+	if err != nil {
+		if err == model.ERROR_USER_EXISTS {
+			registerResMsg.Code = 505
+			registerResMsg.Error = model.ERROR_USER_EXISTS.Error()
+		} else {
+			registerResMsg.Code = 506
+			registerResMsg.Error = "server.process.userProcess.go.ServerProcessRegister.注册时发生未知错误！"
+		}
+	} else {
+		registerResMsg.Code = 200
+	}
+	//序列化registerResMsg
+	data, err := json.Marshal(registerResMsg)
+	if err != nil {
+		fmt.Println("server.process.userProcess.go.ServerProcessRegister.json.Marshal(registerResMsg) err=", err)
+		return
+	}
+	//将registerResMsg的信息赋值给resMsg.Data
+	resMsg.Data = string(data)
+	//序列化resMsg
+	data, err = json.Marshal(resMsg)
+	if err != nil {
+		fmt.Println("server.process.userProcess.go.ServerProcessRegister.json.Marshal(resMsg) err=", err)
+		return
+	}
+	//发送data给客户端
+	tf := &utils.Transfer{
+		Conn: userProcess.Conn,
+	}
+	fmt.Println("server.process.userProcess.go.ServerProcessRegister data", data)
+	err = tf.WritePkg(data)
+	if err != nil {
+		fmt.Println("server.process.userProcess.go.ServerProcessRegister.tf.WritePkg(data) err=", err)
+		return
+	}
+	return
+}

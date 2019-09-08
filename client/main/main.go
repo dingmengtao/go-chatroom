@@ -8,6 +8,7 @@ import (
 
 var userID int
 var userPwd string
+var userName string
 
 func main() {
 	var key int
@@ -34,6 +35,15 @@ func main() {
 			//loop = false
 		case 2:
 			fmt.Println("用户注册")
+			fmt.Println("请输入用户id：")
+			fmt.Scanf("%d\n", &userID)
+			fmt.Println("请输入用户密码：")
+			fmt.Scanf("%s\n", &userPwd)
+			fmt.Println("请输入用户名：")
+			fmt.Scanf("%s\n", &userName)
+			//进行注册操作
+			up := &process.UserProcess{}
+			up.Register(userID, userPwd, userName)
 			//loop = false
 		case 3:
 			fmt.Println("退出聊天室")

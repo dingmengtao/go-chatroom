@@ -97,3 +97,68 @@ func (userProcess *UserProcess) Login(userID int, userPwd string) (err error) {
 	fmt.Println("loginResMsg=", loginResMsg)
 	return
 }
+
+//Register 注册
+func (userProcess *UserProcess) Register(userID int, userPwd, userName string) (err error) {
+	//1.连接到服务器
+	conn, err := net.Dial("tcp", "127.0.0.1:8889")
+	if err != nil {
+		fmt.Println("net.Dail err=", err)
+		return
+	}
+	//延时关闭
+	defer conn.Close()
+
+	//2.准备通过conn发送消息给服务器
+	var msg message.Message
+	msg.Type = message.RegisterMsgType
+	//3.创建一个RegisterMsg结构体
+	var registerMsg message.RegisterMsg
+	registerMsg.User.UserID = userID
+	registerMsg.User.UserPwd = userPwd
+	registerMsg.User.UserName = userName
+	//4.将registerMsg进行序列化
+	data, err := json.Marshal(registerMsg)
+	if err != nil {
+		fmt.Println("json.Marshal(registerMsg) err=", err)
+		return
+	}
+
+	msg.Data = string(data)
+	//4.将msg进行序列化
+	data, err = json.Marshal(msg)
+	if err != nil {
+		fmt.Println("json.Marshal(msg) err=", err)
+		return
+	}
+
+	//创建一个transfer实例
+	tf := &utils.Transfer{
+		Conn: conn,
+	}
+	//发送data信息个服务器
+	err = tf.WritePkg(data)
+	if err != nil {
+		fmt.Println("注册发送信息到服务器错误 err=", err)
+	}
+	//读取服务器返回的信息
+	msg, err = tf.ReadPkg()
+	if err != nil {
+		fmt.Println("注册读取服务器返回的信息错误 err=", err)
+	}
+	//将服务端返回的消息反序列化
+	var registerResMsg message.RegisterResMsg
+	err = json.Unmarshal([]byte(msg.Data), &registerResMsg)
+	if err != nil {
+		fmt.Println("registerResMsg.json.Unmarshal() err=", err)
+		//os.Exit(0)
+	} else if registerResMsg.Code == 200 {
+		fmt.Println("注册成功，去登录吧！")
+		//os.Exit(0)
+	} else {
+		fmt.Println(registerResMsg.Error)
+		//os.Exit(0)
+	}
+	fmt.Println("registerResMsg=", registerResMsg)
+	return
+}

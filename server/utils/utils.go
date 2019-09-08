@@ -28,7 +28,7 @@ func (transfer *Transfer) ReadPkg() (msg message.Message, err error) {
 	}
 	fmt.Printf("读取到的buf=%v \n", transfer.Buf[:4])
 
-	//把buf[:4]转成uint32并计算七=其长度
+	//把buf[:4]转成uint32并计算其长度
 	var pkgLen uint32
 	pkgLen = binary.BigEndian.Uint32(transfer.Buf[:4])
 
@@ -38,6 +38,7 @@ func (transfer *Transfer) ReadPkg() (msg message.Message, err error) {
 		fmt.Println("conn.Read(buf[:pkgLen] err=", err)
 		return
 	}
+	//fmt.Println("server.utils.ReadPkg.transfer.Conn.Read(transfer.Buf[:pkgLen])", n, err, int(pkgLen))
 	//把conn总pkgLen长度的消息内容反序列化
 	err = json.Unmarshal(transfer.Buf[:pkgLen], &msg)
 	if err != nil {

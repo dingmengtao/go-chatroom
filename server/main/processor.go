@@ -26,8 +26,12 @@ func (processor *Processor) serverProcessMsg(msg *message.Message) (err error) {
 		err = up.ServerProcessLogin(msg)
 	case message.RegisterMsgType:
 		//处理注册
+		up := &process.UserProcess{
+			Conn: processor.Conn,
+		}
+		err = up.ServerProcessRegister(msg)
 	default:
-		fmt.Println("消息类型未知。。。")
+		fmt.Println("server.main.processor.go.serverProcessMsg.消息类型未知。。。")
 	}
 	return
 }
